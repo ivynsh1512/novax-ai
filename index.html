@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+  <meta http-equiv="Content-Security-Policy" content="
+default-src 'self';
+
+script-src
+'self'
+https://cdnjs.cloudflare.com
+https://www.gstatic.com
+https://apis.google.com
+https://accounts.google.com
+https://checkout.razorpay.com
+'unsafe-inline';
+
+connect-src
+'self'
+https://identitytoolkit.googleapis.com
+https://securetoken.googleapis.com
+https://firestore.googleapis.com
+https://www.googleapis.com
+https://accounts.google.com
+https://www.gstatic.com
+https://cdnjs.cloudflare.com
+https://serpapi.com
+https://serper.dev
+https://novax-ai-backend.divyansh-shukla.workers.dev
+https://api.razorpay.com;
+
+frame-src
+https://accounts.google.com
+https://novaxaii.firebaseapp.com
+https://api.razorpay.com;
+
+img-src
+'self'
+data:
+https:;
+
+style-src
+'self'
+https://cdnjs.cloudflare.com
+'unsafe-inline';
+
+font-src
+'self'
+https://cdnjs.cloudflare.com
+data:;
+">
+  <!-- SEO meta tags -->
+  <meta name="description"
+    content="NovaX AI is an advanced AI chat interface with real-time responses, code highlighting, and Firebase integration. Experience the future of conversation." />
+  <meta name="keywords" content="AI, chat, NovaX, Grok-like, Firebase, code highlighting, Divyansh Shukla" />
+  <meta name="author" content="Divyansh Shukla" />
+  <meta property="og:title" content="NovaX AI – Intelligent Chat Interface" />
+  <meta property="og:description"
+    content="NovaX AI offers a Grok‑like experience with real‑time AI responses, code syntax highlighting, and seamless Firebase integration." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.novax.ai/" />
+  <meta property="og:image" content="https://www.novax.ai/og-image.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" type="image/png" href="logo.png" />
+
+  <title>NovaX AI</title>
+
+  <!-- highlight.js + DOMPurify (via cdn) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <script src="js/vendor/marked.min.js"></script>
+
+  <!-- CSS files (assumed present) -->
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/chat.css" />
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+</head>
+
+<body>
+  <!-- ✅ C. Heavy Visual Effects Wrapper (contains canvas and will also contain astro-3d after script move) -->
+  <div id="visualEffects" class="effects-disabled">
+    <canvas id="particle-canvas"></canvas>
+    <!-- astro-3d is originally in .main, we will move it here via script -->
+  </div>
+
+  <div class="app">
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+      <div class="logo-area">
+        <img src="logo.png" class="logo-img" alt="NovaX Logo" />
+        <span class="nav-text">NovaX AI</span>
+      </div>
+      <div class="search-area">
+        <i class="fas fa-search"></i>
+        <input type="text" id="chatSearchInput" placeholder="Search chats..." />
+        <span class="search-shortcut">CTRL + K</span>
+      </div>
+      <div class="nav-section">
+        <div class="nav-item active" id="newChatBtn">
+          <span class="nav-icon"><i class="fas fa-plus"></i></span>
+          <span class="nav-text">New Chat</span>
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-title">History</div>
+        <div class="history-list" id="historyList"></div>
+      </div>
+
+      <!-- EXPLORE & DASHBOARD -->
+      <div class="nav-section">
+        <div class="nav-item" data-view="explore">
+          <span class="nav-icon"><i class="fas fa-compass"></i></span>
+          <span class="nav-text">Explore</span>
+        </div>
+        <div class="nav-item" data-view="dashboard">
+          <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+          <span class="nav-text">Dashboard</span>
+        </div>
+      </div>
+
+      <!-- PROFILE AREA with dropdown menu -->
+      <div class="profile-area" id="profileArea">
+        <span class="profile-icon"><i class="fas fa-user-circle"></i></span>
+        <span class="profile-text" id="profileText">Guest User</span>
+
+        <!-- Profile dropdown menu -->
+        <div class="dropdown-menu profile-menu" id="profileMenu">
+          <div class="dropdown-item" id="openSettings">
+            <i class="fas fa-gear"></i> Settings
+          </div>
+          <div class="dropdown-item" id="logoutBtn">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </div>
+        </div>
+      </div>
+
+      <div class="credit">Developed by Divyansh Shukla<br />Founder of NovaX AI</div>
+    </div>
+
+    <div class="toggle-sidebar" id="toggleSidebar">
+      <i class="fas fa-bars-staggered"></i>
+    </div>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+
+
+    <!-- MAIN PANEL -->
+    <div class="main" id="mainPanel">
+      <!-- MOBILE HEADER (ChatGPT Style) -->
+      <div class="mobile-header" id="mobileHeader">
+        <div class="mobile-left">
+          <!-- Sidebar arrow (#toggleSidebar) floats here via CSS -->
+        </div>
+        <div class="mobile-title">NovaX AI</div>
+        <div class="mobile-right">
+          <button id="mobileNewChatBtnHead" class="mobile-icon-btn">
+            <i class="fas fa-edit"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- astro-3d is placed here initially (will be moved to visualEffects by script) -->
+      <div id="astro-3d"></div>
+
+      <div class="grok-bar glass-card" id="desktopHeader" style="display: none;">
+        <span class="grok-title" id="viewTitle">NovaX AI</span>
+        <div id="appStatusIndicator" class="status-indicator"></div>
+        <div class="header-actions">
+          <button id="upgradeBtn" class="upgrade-btn">
+            Upgrade
+          </button>
+        </div>
+      </div>
+
+      <!-- CHAT VIEW -->
+      <div class="view-chat idle" id="viewChat">
+        <div class="chat-container" id="chatContainer">
+          <div class="messages" id="messageList">
+            <div id="welcome-screen" class="welcome-screen">
+              <div class="welcome-content">
+                <h1 id="welcome-title">What are we solving today?</h1>
+                <p id="welcome-subtitle">Fast answers. Deep thinking. Zero limits.</p>
+                <div class="suggestions"></div>
+                <div id="mode-animation"></div>
+                <div class="suggested-prompts">
+                  <div class="prompt-chip">Make an plan</div>
+                  <div class="prompt-chip"><i class="fas fa-lightbulb"></i> Brainstorm ideas</div>
+                  <div class="prompt-chip"><i class="fas fa-align-left"></i> summarize text</div>
+                  <div class="prompt-chip"><i class="fas fa-image"></i> create an image</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- container for file preview (will be inserted here if needed) -->
+          <div id="globalFilePreview" class="file-preview-container" style="text-align: left; padding: 0 20px;"></div>
+        </div>
+        <div class="input-area" id="inputArea">
+          <div class="input-wrapper" id="inputWrapper">
+            <input type="file" id="fileUpload" accept=".txt,.js,.py,.html,.json,.md,.csv,.pdf" style="display:none;" />
+
+            <!-- LEFT SIDE PLUS BUTTON -->
+            <div class="file-upload-wrapper" style="position:relative;">
+              <button id="plusMenu" class="plus-btn" aria-haspopup="true" aria-expanded="false" title="Actions">
+                <i class="fas fa-plus"></i>
+              </button>
+              <div id="plusDropdown" class="dropdown-menu plus-dropdown">
+                <div class="dropdown-item" id="attachFileBtn" role="button">Upload file</div>
+                <div class="dropdown-item" id="webSearchBtn" role="button">Web search</div>
+                <div class="dropdown-item model-option" id="createImageOption" data-model="image" role="button">
+                  <i class="fas fa-image"></i>
+                  <span>Create Image</span>
+                </div>
+                <div class="dropdown-divider"></div>
+                <div class="dropdown-item model-option" data-model="fast">
+                  <i class="fas fa-bolt"></i> Fast
+                </div>
+                <div class="dropdown-item model-option" data-model="deep">
+                  <i class="fas fa-brain"></i> Deep
+                </div>
+                <div class="dropdown-item model-option" data-model="astrology">
+                  <i class="fas fa-star-and-crescent"></i> Astrology
+                </div>
+              </div>
+            </div> <!-- close file-upload-wrapper -->
+
+            <textarea class="message-input" id="messageInput" placeholder="Ask anything..." rows="1"></textarea>
+
+            <div class="action-group">
+              <button class="voice-input-btn" id="voiceInputBtn" title="Voice input (Alt+V)">
+                <i class="fas fa-microphone"></i>
+              </button>
+              <button class="send-btn disabled" id="sendBtn">
+                <i class="fas fa-arrow-up"></i>
+              </button>
+              <button class="stop-btn" id="stopBtn">
+                <i class="fas fa-stop"></i>
+              </button>
+            </div>
+          </div> <!-- close input-wrapper -->
+        </div> <!-- close input-area -->
+      </div>
+
+      <!-- EXPLORE VIEW -->
+      <div class="view-explore hidden" id="viewExplore">
+        <div class="view-content">
+          <h2>Explore Prompts</h2>
+
+          <!-- Personalized Prompts (based on your interests) -->
+          <div class="explore-section">
+            <div class="section-header">
+              <h3><i class="fas fa-rocket"></i> Getting Started</h3>
+              <p>Quick start prompts for daily tasks</p>
+            </div>
+            <div class="explore-grid" id="freePrompts"></div>
+          </div>
+
+          <div class="explore-section">
+            <div class="section-header">
+              <h3><i class="fas fa-briefcase"></i> Career & Productivity</h3>
+              <p>Professional templates for your workday</p>
+            </div>
+            <div class="explore-grid" id="careerPrompts"></div>
+          </div>
+
+          <div class="explore-section">
+            <div class="section-header">
+              <h3><i class="fas fa-user-gear"></i> Personalized for You</h3>
+              <p>Based on your previous conversations</p>
+            </div>
+            <div class="explore-grid" id="personalizedPrompts"></div>
+          </div>
+
+          <div class="explore-section">
+            <h3>📊 Plan Comparison</h3>
+            <div class="comparison-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Feature</th>
+                    <th>Free</th>
+                    <th>Pro</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Prompt Library</td>
+                    <td>10 Prompts</td>
+                    <td>50+ Prompts</td>
+                  </tr>
+                  <tr>
+                    <td>Advanced Writing</td>
+                    <td>❌</td>
+                    <td>✅</td>
+                  </tr>
+                  <tr>
+                    <td>Business Strategy</td>
+                    <td>❌</td>
+                    <td>✅</td>
+                  </tr>
+                  <tr>
+                    <td>Deep Coding Prompts</td>
+                    <td>Limited</td>
+                    <td>Full Access</td>
+                  </tr>
+                  <tr>
+                    <td>Premium Model Access</td>
+                    <td>Fast Only</td>
+                    <td>Fast +Deep + Astrology</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS VIEW -->
+      <div class="view-settings hidden" id="viewSettings">
+        <div class="view-content">
+          <div class="settings-tabs">
+            <button class="tab-btn active" data-tab="account">Account</button>
+            <button class="tab-btn" data-tab="preferences">Preferences</button>
+          </div>
+
+          <div class="tab-content active" id="tabAccount">
+            <div class="settings-form">
+              <!-- Guest Notice -->
+              <div id="settingsGuestNotice">
+                <p>Please log in to see account details.</p>
+              </div>
+
+              <!-- Logged In Account Section -->
+              <div id="settingsAccountSection" style="display:none;">
+                <div class="form-group">
+                  <label>Name</label>
+                  <p id="settingsName"></p>
+                </div>
+                <div class="form-group">
+                  <label>Email</label>
+                  <p id="settingsEmail"></p>
+                </div>
+
+                <!-- Subscription Section (new) -->
+                <div class="subscription-section">
+                  <h3>Subscription</h3>
+                  <div id="subscriptionStatusBox"></div>
+                </div>
+
+                <button class="logout-settings-btn" id="logoutBtnSettings">
+                  Logout
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- PREFERENCES TAB (unchanged) -->
+          <div class="tab-content" id="tabPreferences">
+            <div class="settings-form">
+
+              <!-- Response Style -->
+              <div class="form-group">
+                <label>Response Style</label>
+                <select id="responseStyle">
+                  <option value="detailed">Detailed</option>
+                  <option value="balanced">Balanced</option>
+                  <option value="concise">Concise</option>
+                </select>
+              </div>
+
+              <!-- Response Length -->
+              <div class="form-group">
+                <label>Response Length</label>
+                <select id="responseLength">
+                  <option value="short">Short</option>
+                  <option value="balanced">Balanced</option>
+                  <option value="long">Long</option>
+                </select>
+              </div>
+
+              <!-- Haptics Toggle -->
+              <div class="form-group toggle-group">
+                <label>Haptics (AI generating vibration)</label>
+                <label class="switch">
+                  <input type="checkbox" id="hapticsToggle">
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <!-- Voice Output Toggle (new) -->
+              <div class="form-group toggle-group">
+                <label>🔊 Voice Output (AI speaks)</label>
+                <label class="switch">
+                  <input type="checkbox" id="voiceOutputToggle">
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <!-- Custom Instructions -->
+              <div class="form-group">
+                <label>Custom Instructions</label>
+                <textarea id="customInstructions" placeholder="Tell NovaX how you want it to respond..."
+                  rows="3"></textarea>
+              </div>
+
+              <button class="save-btn" id="savePreferences">
+                Save Preferences
+              </button>
+
+              <div class="settings-section">
+                <button id="clearAllChatsBtn" class="danger-btn">
+                  Clear All Chats
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DASHBOARD VIEW -->
+      <div class="view-dashboard hidden" id="viewDashboard">
+        <div class="view-content">
+          <h2>Your Dashboard</h2>
+
+          <!-- Stats Cards -->
+          <div class="dashboard-grid">
+            <div class="stat-card glass-card">
+              <i class="fas fa-comments stat-icon"></i>
+              <div class="stat-info">
+                <span class="stat-label">Total Chats</span>
+                <span class="stat-value" id="statTotalChats">0</span>
+              </div>
+            </div>
+            <div class="stat-card glass-card">
+              <i class="fas fa-brain stat-icon"></i>
+              <div class="stat-info">
+                <span class="stat-label">AI Level</span>
+                <span class="stat-value" id="statUserLevel">Beginner</span>
+              </div>
+            </div>
+            <div class="stat-card glass-card">
+              <i class="fas fa-bolt stat-icon"></i>
+              <div class="stat-info">
+                <span class="stat-label">Total Messages</span>
+                <span class="stat-value" id="statTotalMsgs">0</span>
+              </div>
+            </div>
+            <div class="stat-card glass-card">
+              <i class="fas fa-crown stat-icon"></i>
+              <div class="stat-info">
+                <span class="stat-label">Plan Status</span>
+                <span class="stat-value" id="planStatus">Free</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Activity Summary -->
+          <div class="dashboard-section recent-activity-section">
+            <div class="section-header">
+              <h3>🕒 Recent Activity</h3>
+            </div>
+            <div id="dashboardRecentActivity" class="activity-list glass-card">
+              <div class="activity-item empty">No recent activity detected.</div>
+            </div>
+          </div>
+
+          <!-- Website Builder Section -->
+          <div class="dashboard-section">
+            <h3>🌐 AI Website Builder</h3>
+            <div class="website-builder-card glass-card" id="dashboardWebsiteBuilderCard">
+              <div class="card-content">
+                <i class="fas fa-magic fa-2xl"></i>
+                <div class="text-group">
+                  <h4>Build Website with AI</h4>
+                  <p>Create a stunning landing page for your business in seconds.</p>
+                </div>
+                <button id="dashboardStartBuilder" class="action-btn-primary">Start</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- My Websites -->
+          <div class="dashboard-section">
+            <div class="section-header">
+              <h3>📁 My Websites</h3>
+              <button id="dashboardRefreshWebsites" class="action-btn-icon"><i class="fas fa-sync-alt"></i></button>
+            </div>
+            <div id="dashboardMyWebsitesList" class="website-grid">
+              <!-- Websites will be loaded here -->
+            </div>
+          </div>
+
+          <!-- Premium Management -->
+          <div class="dashboard-section">
+            <h3>💎 Premium Membership</h3>
+            <div class="premium-card glass-card" id="dashboardPremiumCard">
+              <div class="premium-info">
+                <p id="premiumStatusText">You are on the Free plan.</p>
+                <button id="dashboardUpgradeBtn" class="upgrade-btn">Upgrade to Premium</button>
+                <button id="dashboardCancelBtn" class="danger-btn" style="display:none;">Cancel
+                  Subscription</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Scroll to bottom button -->
+  <button class="scroll-bottom-btn" id="scrollBottomBtn" title="Scroll to bottom">
+    <i class="fas fa-arrow-down"></i>
+  </button>
+
+  <!-- Shortcuts panel -->
+  <div class="view-shortcuts" id="viewShortcuts">
+    <div class="shortcuts-header">
+      <h3>Keyboard Shortcuts</h3>
+      <button class="close-shortcuts" id="closeShortcutsBtn">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="shortcuts-grid">
+      <div class="shortcut-item">
+        <kbd>⌘/Ctrl + Enter</kbd>
+        <span>Send message</span>
+      </div>
+      <div class="shortcut-item">
+        <kbd>⌘/Ctrl + K</kbd>
+        <span>Search chats</span>
+      </div>
+      <div class="shortcut-item">
+        <kbd>⌘/Ctrl + ⇧ + N</kbd>
+        <span>New chat</span>
+      </div>
+      <div class="shortcut-item">
+        <kbd>⌘/Ctrl + ⇧ + S</kbd>
+        <span>Toggle web search</span>
+      </div>
+      <div class="shortcut-item">
+        <kbd>⌘/Ctrl + /</kbd>
+        <span>Show shortcuts</span>
+      </div>
+      <div class="shortcut-item">
+        <kbd>Alt + V</kbd>
+        <span>Voice input</span>
+      </div>
+      <div class="shortcut-item">
+        <kbd>Esc</kbd>
+        <span>Close menus</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast">Copied</div>
+
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <!-- ✅ A. Switch to Module Architecture -->
+  <script type="module" src="js/chat.js"></script>
+
+  <!-- Advanced integration: file reader, memory, voice, prompts, fade -->
+  <script>
+    (function () {
+
+      // ==================== APP STATE (with pendingFile) ====================
+      window.state = window.state || {};
+      // initialize pendingFile
+      state.pendingFile = null;
+
+      // ==================== FILE UPLOAD HANDLER ====================
+      const fileInput = document.getElementById('fileUpload');
+      if (fileInput) {
+        fileInput.addEventListener('change', async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+
+          const reader = new FileReader();
+
+          reader.onload = function (event) {
+            const isImage = file.type.startsWith('image/');
+            state.pendingFile = {
+              name: file.name,
+              type: file.type,
+              content: event.target.result,
+              isImage: isImage
+            };
+
+            showFilePreview(file.name, isImage ? event.target.result : null);
+          };
+
+          if (file.type.startsWith('image/')) {
+            reader.readAsDataURL(file);
+          } else {
+            reader.readAsText(file);
+          }
+        });
+      }
+
+      // file preview display + remove option
+      window.showFilePreview = function (filename, previewUrl) {
+        const previewContainer = document.getElementById('globalFilePreview');
+        if (!previewContainer) return;
+
+        let previewHtml = '';
+        if (previewUrl) {
+          previewHtml = `<div class="file-thumb"><img src="${previewUrl}" alt="preview" /></div>`;
+        } else {
+          previewHtml = `<i class="fas fa-file-alt file-icon"></i>`;
+        }
+
+        previewContainer.innerHTML = `
+          <div class="file-preview-bubble">
+            ${previewHtml}
+            <span class="file-name">${filename}</span>
+            <span class="remove-file" id="removeFilePreview"><i class="fas fa-times"></i></span>
+          </div>
+        `;
+
+        document.getElementById('removeFilePreview')?.addEventListener('click', function () {
+          state.pendingFile = null;
+          previewContainer.innerHTML = '';
+          fileInput.value = ''; // clear input
+        });
+      };
+
+      // clear preview manually if needed
+      window.clearFilePreview = function () {
+        const previewContainer = document.getElementById('globalFilePreview');
+        if (previewContainer) previewContainer.innerHTML = '';
+        state.pendingFile = null;
+        if (fileInput) fileInput.value = '';
+      };
+
+      // ==================== MEMORY LAYER ====================
+      let longTermMemory = JSON.parse(localStorage.getItem('novaxMemory')) || {};
+      function saveMemory() {
+        localStorage.setItem('novaxMemory', JSON.stringify(longTermMemory));
+      }
+
+      window.getSystemPromptWithMemory = function () {
+        return `You are NovaX AI.
+User Memory: ${JSON.stringify(longTermMemory)}
+Respond intelligently and personally. Detect user language and reply in same language.`;
+      };
+
+      window.updateMemoryFromMessage = function (assistantMsg, userMsg) {
+        if (!assistantMsg || !userMsg) return;
+        if (userMsg.toLowerCase().includes('i am a student') || userMsg.toLowerCase().includes('as a student')) {
+          longTermMemory.role = 'student';
+        }
+        if (userMsg.toLowerCase().includes('developer') || userMsg.toLowerCase().includes('coder')) {
+          longTermMemory.role = 'developer';
+        }
+        if (assistantMsg.includes('career advice') || userMsg.includes('career')) {
+          longTermMemory.interested = 'career';
+        }
+        saveMemory();
+      };
+
+      // ==================== VOICE OUTPUT ====================
+      window.speak = function (text) {
+        const voiceToggle = document.getElementById('voiceOutputToggle');
+        if (voiceToggle && voiceToggle.checked) {
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.rate = 1;
+          speechSynthesis.speak(utterance);
+        }
+      };
+
+      // setupPromptChips removed as it is handled in chat.js
+
+      // ==================== PATCH addMessageToUI (fade + voice + memory) ====================
+      function patchAddMessage() {
+        if (window.addMessageToUINative) return;
+        if (typeof window.addMessageToUI === 'function') {
+          window.addMessageToUINative = window.addMessageToUI;
+          window.addMessageToUI = function (role, message, messageId = null, isStreaming = false) {
+            const msgDiv = window.addMessageToUINative(role, message, messageId);
+            if (msgDiv && msgDiv.style) {
+              msgDiv.style.opacity = '0';
+              setTimeout(() => {
+                msgDiv.style.transition = 'opacity 0.3s ease';
+                msgDiv.style.opacity = '1';
+              }, 10);
+            }
+            if (role === 'assistant' && !isStreaming) {
+              window.speak(message);
+              if (window.lastUserMessage) {
+                window.updateMemoryFromMessage(message, window.lastUserMessage);
+              }
+            }
+            return msgDiv;
+          };
+        } else {
+          setTimeout(patchAddMessage, 200);
+        }
+      }
+      patchAddMessage();
+
+      // Wrap sendMessage to handle file attachment and memory capture
+      const originalSend = window.sendMessage;
+      window.sendMessage = function () {
+        const input = document.getElementById('messageInput');
+        if (input && input.value.trim()) {
+          window.lastUserMessage = input.value.trim();
+        }
+        // if file pending, append to message
+        if (state.pendingFile) {
+          const fileInfo = `\n\n[Attached file: ${state.pendingFile.name}]\n\`\`\`\n${state.pendingFile.content.substring(0, 1500)}${state.pendingFile.content.length > 1500 ? '\n…[truncated]' : ''}\n\`\`\``;
+          input.value = (input.value + fileInfo).trim();
+          // clear file after attaching
+          clearFilePreview();
+          state.pendingFile = null;
+        }
+        if (originalSend) return originalSend();
+      };
+
+      // default voice off
+      const voiceToggle = document.getElementById('voiceOutputToggle');
+      if (voiceToggle) voiceToggle.checked = false;
+
+      // Move astro-3d into visualEffects wrapper
+      const astro3d = document.getElementById('astro-3d');
+      const visualEffects = document.getElementById('visualEffects');
+      if (astro3d && visualEffects) {
+        visualEffects.appendChild(astro3d); // now it's inside the wrapper
+      }
+    })();
+  </script>
+  <!-- Three.js for 3D planets -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+  <!-- WEBSITE BUILDER MODAL -->
+  <div id="websiteBuilderModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>AI Website Builder</h2>
+        <button type="button" class="close-modal" id="closeBuilderModal"
+          style="z-index:10; cursor:pointer;">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="websiteBuilderForm">
+          <div class="form-group">
+            <label>Business Name *</label>
+            <input id="bizName" placeholder="e.g. Infygen Labs" class="auth-input" required>
+          </div>
+          <div class="form-group">
+            <label>Business Type *</label>
+            <input id="bizType" placeholder="e.g. AI SaaS, Coffee Shop" class="auth-input" required>
+          </div>
+          <div class="form-group">
+            <label>Services (comma separated) *</label>
+            <input id="services" placeholder="e.g. Web Design, AI Consulting" class="auth-input" required>
+          </div>
+          <div class="form-group">
+            <label>Target Audience</label>
+            <input id="targetAudience" placeholder="e.g. small business owners, tech startups" class="auth-input">
+          </div>
+          <div class="form-group">
+            <label>Business Goals</label>
+            <textarea id="bizGoals" placeholder="e.g. increase sales, build brand awareness, generate leads" rows="2"
+              class="auth-input"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Call to Action Preference</label>
+            <select id="ctaPreference" class="auth-input">
+              <option value="contact">Contact Us</option>
+              <option value="signup">Sign Up</option>
+              <option value="buy">Buy Now</option>
+              <option value="learn">Learn More</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Business Category</label>
+            <select id="bizCategory" class="auth-input">
+              <option value="technology">Technology</option>
+              <option value="healthcare">Healthcare</option>
+              <option value="education">Education</option>
+              <option value="finance">Finance</option>
+              <option value="retail">Retail</option>
+              <option value="realestate">Real Estate</option>
+              <option value="hospitality">Hospitality</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Business Description</label>
+            <textarea id="bizDesc" placeholder="Tell AI about your business..." rows="3" class="auth-input"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Theme Color</label>
+            <input type="color" id="themeColor" value="#10a37f" class="color-input">
+          </div>
+          <button type="submit" id="generateSite" class="auth-btn">Generate Website</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- WEBSITE PREVIEW MODAL -->
+  <div id="websitePreviewModal" class="modal-overlay hidden">
+    <div class="modal-card full-modal">
+      <div class="modal-header">
+        <h2>Preview</h2>
+        <div class="preview-actions">
+          <button id="regenerateSite" class="auth-btn secondary small">Regenerate</button>
+          <button id="publishSite" class="auth-btn small">Publish</button>
+          <button type="button" class="close-modal" id="closePreviewModal"
+            style="z-index:10; cursor:pointer;">&times;</button>
+        </div>
+      </div>
+      <div class="modal-body no-padding">
+        <iframe id="sitePreviewFrame" class="preview-iframe" style="width:100%;height:650px;border:none;"></iframe>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

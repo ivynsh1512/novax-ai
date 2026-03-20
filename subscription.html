@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NovaX AI - Premium Membership</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-glow: rgba(99, 102, 241, 0.4);
+      --bg-dark: #000;
+      --card-bg: rgba(255, 255, 255, 0.03);
+      --border: rgba(255, 255, 255, 0.08);
+    }
+
+    body {
+      background: var(--bg-dark);
+      color: #fff;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 60px 20px;
+      overflow-y: auto;
+    }
+
+    .bg-blobs {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      overflow: hidden;
+    }
+
+    .blob {
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      background: var(--primary-glow);
+      filter: blur(120px);
+      border-radius: 50%;
+      opacity: 0.3;
+    }
+
+    .blob-1 { top: -100px; right: -100px; }
+    .blob-2 { bottom: -100px; left: -100px; background: rgba(139, 92, 246, 0.3); }
+
+    .header {
+      text-align: center;
+      max-width: 600px;
+      margin-bottom: 60px;
+      animation: fadeInDown 0.8s ease;
+    }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .header h1 {
+      font-size: 48px;
+      font-weight: 800;
+      margin: 0 0 16px 0;
+      background: linear-gradient(to right, #fff, #a1a1aa);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.02em;
+    }
+
+    .header p {
+      font-size: 18px;
+      color: #a1a1aa;
+      line-height: 1.6;
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 32px;
+      width: 100%;
+      max-width: 1000px;
+      animation: fadeInUp 1s ease;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .plan-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: 32px;
+      padding: 48px;
+      position: relative;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .plan-card:hover {
+      transform: translateY(-8px);
+      border-color: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .plan-card.popular {
+      border: 2px solid var(--primary);
+      background: rgba(99, 102, 241, 0.05);
+    }
+
+    .badge {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      background: var(--primary);
+      color: white;
+      padding: 6px 14px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .plan-name {
+      font-size: 20px;
+      font-weight: 600;
+      color: #a1a1aa;
+      margin-bottom: 12px;
+    }
+
+    .plan-price {
+      font-size: 56px;
+      font-weight: 800;
+      margin-bottom: 32px;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .plan-price sub {
+      font-size: 16px;
+      color: #71717a;
+      font-weight: 500;
+    }
+
+    .features-list {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 40px 0;
+      flex: 1;
+    }
+
+    .features-list li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+      color: #ececf1;
+      font-size: 15px;
+    }
+
+    .features-list li i {
+      color: var(--primary);
+      font-size: 18px;
+    }
+
+    .features-list li.disabled {
+      color: #52525b;
+    }
+
+    .features-list li.disabled i {
+      color: #3f3f46;
+    }
+
+    .btn-action {
+      width: 100%;
+      padding: 18px;
+      border-radius: 16px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: white;
+    }
+
+    .btn-action.primary {
+      background: var(--primary);
+      border: none;
+      color: white;
+      box-shadow: 0 8px 24px var(--primary-glow);
+    }
+
+    .btn-action:hover {
+      transform: scale(1.02);
+    }
+
+    .btn-action.primary:hover {
+      background: #4f46e5;
+      box-shadow: 0 12px 32px var(--primary-glow);
+    }
+
+    .back-nav {
+      margin-top: 48px;
+    }
+
+    .back-nav a {
+      color: #71717a;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .back-nav a:hover {
+      color: #fff;
+    }
+
+    @media (max-width: 768px) {
+      .header h1 { font-size: 36px; }
+      .pricing-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-blobs">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+  </div>
+
+  <div class="header">
+    <h1>Power your workflow</h1>
+    <p>Choose the plan that fits your needs. Unlock the full potential of NovaX AI with our Premium membership.</p>
+  </div>
+
+  <div class="pricing-grid">
+    <!-- Free Plan -->
+    <div class="plan-card">
+      <div class="plan-name">Starter</div>
+      <div class="plan-price">₹0<sub>/life</sub></div>
+      <ul class="features-list">
+        <li><i class="fas fa-check-circle"></i> Fast AI Mode (GPT-3.5 Class)</li>
+        <li><i class="fas fa-check-circle"></i> Universal Chat History</li>
+        <li><i class="fas fa-check-circle"></i> Basic Response Formatting</li>
+        <li class="disabled"><i class="fas fa-times-circle"></i> Deep Intelligence Mode</li>
+        <li class="disabled"><i class="fas fa-times-circle"></i> Vedic Astrology System</li>
+        <li class="disabled"><i class="fas fa-times-circle"></i> Advanced File Analysis</li>
+      </ul>
+      <button class="btn-action" onclick="window.location.href='index.html'">Current Plan</button>
+    </div>
+
+    <!-- Pro Plan -->
+    <div class="plan-card popular">
+      <div class="badge">Recommended</div>
+      <div class="plan-name">Premium Pro</div>
+      <div class="plan-price">₹499<sub>/mo</sub></div>
+      <ul class="features-list">
+        <li><i class="fas fa-check-circle"></i> <strong>Deep Mode</strong> (GPT-4 Class)</li>
+        <li><i class="fas fa-check-circle"></i> Advanced <strong>Astrology System</strong></li>
+        <li><i class="fas fa-check-circle"></i> Full File Upload & Analysis</li>
+        <li><i class="fas fa-check-circle"></i> Real-time <strong>Web Search</strong></li>
+        <li><i class="fas fa-check-circle"></i> High-Resolution Image Gen</li>
+        <li><i class="fas fa-check-circle"></i> Priority Processing Speed</li>
+      </ul>
+      <button id="upgradeBtn" class="btn-action primary">Upgrade to Premium</button>
+    </div>
+  </div>
+
+  <div class="back-nav">
+    <a href="index.html"><i class="fas fa-arrow-left"></i> Back to NovaX AI</a>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script>
+    document.getElementById('upgradeBtn').addEventListener('click', async () => {
+      const user = firebase.auth().currentUser;
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+      
+      const btn = document.getElementById('upgradeBtn');
+      const originalText = btn.textContent;
+      btn.textContent = 'Processing...';
+      btn.disabled = true;
+
+      try {
+        const token = await user.getIdToken(true);
+        const response = await fetch('https://novax-ai-backend.divyansh-shukla.workers.dev/api/create-subscription', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Subscription creation failed');
+
+        const options = {
+          key: "rzp_live_SM0cmK2lCKU6ke",
+          subscription_id: data.id,
+          name: "NovaX AI Premium",
+          description: "Premium Plan - Full Access",
+          handler: async function (resp) {
+            const verifyRes = await fetch('https://novax-ai-backend.divyansh-shukla.workers.dev/api/verify-payment', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                payment_id: resp.razorpay_payment_id,
+                subscription_id: resp.razorpay_subscription_id,
+                signature: resp.razorpay_signature
+              })
+            });
+            if (verifyRes.ok) {
+              alert('Success! Your Premium features are now active.');
+              window.location.href = 'index.html';
+            } else {
+              alert('Verification failed. If payment was successful, please contact support.');
+            }
+          },
+          prefill: {
+            email: user.email,
+            name: user.displayName || ''
+          },
+          theme: { color: "#6366f1" },
+          modal: {
+            ondismiss: function() {
+              btn.textContent = originalText;
+              btn.disabled = false;
+            }
+          }
+        };
+        const rzp = new Razorpay(options);
+        rzp.open();
+      } catch (err) {
+        alert('Error: ' + err.message);
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
