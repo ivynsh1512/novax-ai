@@ -25,7 +25,11 @@ NovaX AI is a general-purpose AI chatbot designed to help users with conversatio
 ---
 
 ## 📸 Screenshots
-(Add screenshots here)
+<img width="1919" height="943" alt="image" src="https://github.com/user-attachments/assets/2b84ef0d-aa91-4206-915a-ece0279d7a77" />
+<img width="1919" height="948" alt="image" src="https://github.com/user-attachments/assets/2fc9bddd-c315-47a3-8b75-256079ab68dd" />
+
+
+
 
 ---
 
