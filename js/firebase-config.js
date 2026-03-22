@@ -1,6 +1,6 @@
 // Firebase compat version (no modules)
 const firebaseConfig = {
-  apiKey: "AIzaSyA31e01qesTgp_kUHD94X-1D2qpB8C1kf0",
+  apiKey: "",
   authDomain: "novaxaii.firebaseapp.com",
   projectId: "novaxaii",
   storageBucket: "novaxaii.firebasestorage.app",
